@@ -1,272 +1,209 @@
 <!DOCTYPE html>
 <html lang="ar">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>🚀 Crypto Arbitrage Bot</title>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Crypto Arbitrage - Live</title>
 
-<!-- Bootstrap 5 -->
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/css/bootstrap.min.css" rel="stylesheet">
-
-<!-- Chart.js -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <style>
-body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #121212; color: #fff; }
-.navbar { background-color: #0d6efd; }
-.section { padding: 15px; margin-top: 15px; background-color: #1e1e1e; border-radius: 10px; }
-.table thead { background-color: #333; }
-.table tbody tr:hover { background-color: #222; transition: 0.3s; }
-button { transition: 0.3s; }
-button:hover { transform: scale(1.05); }
+body { background:#0f1724; color:#e6eef8; font-family: Inter, system-ui, Arial; }
+.navbar { background:#0b1220; }
+.section { background:#0b1220; border-radius:12px; padding:16px; margin-top:14px; box-shadow: 0 6px 18px rgba(2,6,23,0.6); }
+.table thead { background:#0d1b2a; }
+.btn-glow { box-shadow: 0 6px 20px rgba(3,102,214,0.18); transition: transform .12s; }
+.btn-glow:hover { transform: translateY(-3px); }
+.badge-live { background: linear-gradient(90deg,#00d27a,#00b894); color:#012; }
 </style>
 </head>
 <body>
-
-<!-- Navbar -->
 <nav class="navbar navbar-expand-lg navbar-dark">
-<div class="container-fluid">
-  <a class="navbar-brand" href="#">Crypto Bot</a>
-  <div class="d-flex">
-    <button class="btn btn-light me-2" id="toggleMode">Mode: DEMO</button>
-    <button class="btn btn-light" id="toggleLang">العربية</button>
+  <div class="container-fluid">
+    <a class="navbar-brand">Crypto Arbitrage</a>
+    <div class="d-flex align-items-center">
+      <button class="btn btn-outline-light me-2 btn-glow" id="btnMode">DEMO</button>
+      <button class="btn btn-outline-light me-2" id="btnLang">AR</button>
+      <span class="badge badge-live me-1" id="liveBadge">LIVE</span>
+    </div>
   </div>
-</div>
 </nav>
 
-<div class="container mt-3">
+<div class="container">
+  <div class="section">
+    <div class="d-flex justify-content-between align-items-center">
+      <h5 id="titleTop">أعلى 30 عملة</h5>
+      <div>
+        <button class="btn btn-sm btn-primary me-2" id="btnRefresh">تحديث الآن</button>
+      </div>
+    </div>
+    <canvas id="chartTop" height="100"></canvas>
+    <div class="table-responsive mt-3">
+      <table class="table table-dark table-striped" id="tblTop">
+        <thead><tr><th>الرمز</th><th>السعر (USD)</th><th>Market Cap</th><th>24h%</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </div>
 
-<!-- Top Coins Section -->
-<div class="section">
-<h3 id="topCoinsTitle">📊 أعلى 30 عملة</h3>
-<canvas id="topCoinsChart" height="100"></canvas>
-<table class="table table-dark table-striped mt-3" id="coinsTable">
-<thead>
-<tr><th>الرمز</th><th>السعر (USD)</th><th>القيمة السوقية</th><th>تغير 24h %</th></tr>
-</thead>
-<tbody></tbody>
-</table>
-</div>
+  <div class="section">
+    <h5 id="titlePrices">أسعار المنصات</h5>
+    <div class="table-responsive">
+      <table class="table table-dark table-striped" id="tblPrices">
+        <thead><tr><th>رمز</th><th>Binance</th><th>OKX</th><th>Bybit</th><th>Bitget</th><th>BingX</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </div>
 
-<!-- Prices Section -->
-<div class="section">
-<h3 id="pricesTitle">🔍 أسعار المنصات</h3>
-<table class="table table-dark table-striped" id="pricesTable">
-<thead>
-<tr><th>العملة</th><th>Binance</th><th>OKX</th><th>Bybit</th><th>Bitget</th><th>BingX</th></tr>
-</thead>
-<tbody></tbody>
-</table>
-</div>
+  <div class="section">
+    <h5 id="titleArb">فرص الأرّتبراج</h5>
+    <div class="table-responsive">
+      <table class="table table-dark table-striped" id="tblArb">
+        <thead><tr><th>رمز</th><th>شراء من</th><th>بيع في</th><th>Spread</th><th>%</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </div>
 
-<!-- Arbitrage Section -->
-<div class="section">
-<h3 id="arbTitle">💡 فرص الأرّبتراج</h3>
-<table class="table table-dark table-striped" id="arbTable">
-<thead>
-<tr><th>العملة</th><th>اشترِ من</th><th>بيع في</th><th>Spread (USD)</th><th>نسبة %</th></tr>
-</thead>
-<tbody></tbody>
-</table>
-</div>
-
-<!-- Wallet Section -->
-<div class="section">
-<h3 id="walletTitle">💳 المحفظة التجريبية</h3>
-<table class="table table-dark table-striped" id="walletTable">
-<thead><tr><th>العملة</th><th>الرصيد</th></tr></thead>
-<tbody></tbody>
-</table>
-<button class="btn btn-success mt-2" onclick="executeTrade()">تنفيذ صفقة تجريبية</button>
-</div>
-
+  <div class="section">
+    <h5 id="titleWallet">المحفظة التجريبية</h5>
+    <table class="table table-dark" id="tblWallet">
+      <thead><tr><th>Asset</th><th>Balance</th></tr></thead>
+      <tbody></tbody>
+    </table>
+    <button class="btn btn-success" id="btnTrade">Execute Demo Trade (100 USDT)</button>
+  </div>
 </div>
 
 <script>
-// ------------------------------
-// 1️⃣ إعداد المتغيرات
-// ------------------------------
-let MODE = "DEMO"; // DEMO / LIVE
-let LANG = "AR";   // AR / EN
-let exchanges = ["Binance", "OKX", "Bybit", "Bitget", "BingX"];
+const API_PRICES = '/api/prices';
+let MODE = 'DEMO'; // or 'LIVE'
+let LANG = 'AR';
 let wallet = { USDT: 10000, BTC: 0, ETH: 0 };
-let topCoins = [];
-let prices = {};
-let topCoinsChart;
+let latest = { timestamp:0, symbols:[], data:{} };
+const exchanges = ['binance','okx','bybit','bitget','bingx'];
 
-// ------------------------------
-// 2️⃣ تبديل الوضع DEMO / LIVE
-// ------------------------------
-document.getElementById("toggleMode").onclick = () => {
-  MODE = (MODE === "DEMO") ? "LIVE" : "DEMO";
-  document.getElementById("toggleMode").innerText = (MODE==="DEMO") ? "Mode: DEMO" : "Mode: LIVE";
+document.getElementById('btnMode').onclick = () => {
+  MODE = (MODE==='DEMO' ? 'LIVE' : 'DEMO');
+  document.getElementById('btnMode').innerText = MODE;
+};
+document.getElementById('btnLang').onclick = () => {
+  LANG = (LANG === 'AR') ? 'EN' : 'AR';
+  document.getElementById('btnLang').innerText = LANG;
+  updateText();
 };
 
-// ------------------------------
-// 3️⃣ تبديل اللغة
-// ------------------------------
-document.getElementById("toggleLang").onclick = () => {
-  LANG = (LANG==="AR") ? "EN" : "AR";
-  updateLanguage();
-};
-function updateLanguage() {
-  document.getElementById("topCoinsTitle").innerText = LANG==="AR" ? "📊 أعلى 30 عملة" : "📊 Top 30 Coins";
-  document.getElementById("pricesTitle").innerText = LANG==="AR" ? "🔍 أسعار المنصات" : "🔍 Exchange Prices";
-  document.getElementById("arbTitle").innerText = LANG==="AR" ? "💡 فرص الأرّبتراج" : "💡 Arbitrage Opportunities";
-  document.getElementById("walletTitle").innerText = LANG==="AR" ? "💳 المحفظة التجريبية" : "💳 Demo Wallet";
+document.getElementById('btnRefresh').onclick = fetchAndRender;
+document.getElementById('btnTrade').onclick = executeDemoTrade;
+
+function updateText(){
+  document.getElementById('titleTop').innerText = LANG==='AR' ? 'أعلى 30 عملة' : 'Top 30 coins';
+  document.getElementById('titlePrices').innerText = LANG==='AR' ? 'أسعار المنصات' : 'Exchange prices';
+  document.getElementById('titleArb').innerText = LANG==='AR' ? 'فرص الأرّتبراج' : 'Arbitrage opportunities';
+  document.getElementById('titleWallet').innerText = LANG==='AR' ? 'المحفظة التجريبية' : 'Demo wallet';
 }
 
-// ------------------------------
-// 4️⃣ جلب أعلى 30 عملة من CoinGecko
-// ------------------------------
-async function fetchTop30() {
-  const res = await fetch("https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=30&page=1");
-  const data = await res.json();
-  topCoins = data.map(c => ({
-    symbol: c.symbol.toUpperCase(),
-    price: c.current_price,
-    marketCap: c.market_cap,
-    change: c.price_change_percentage_24h.toFixed(2)
-  }));
-  renderCoins();
-  renderChart();
+async function fetchAndRender(){
+  try {
+    const res = await fetch(API_PRICES);
+    const json = await res.json();
+    latest = json;
+    renderTop(json);
+    renderPrices(json);
+    findAndRenderArb(json);
+    renderWallet();
+  } catch (e) {
+    console.error('fetch error', e);
+  }
 }
 
-// ------------------------------
-// 5️⃣ تحديث وعرض الجدول
-// ------------------------------
-function renderCoins() {
-  const tbody = document.querySelector("#coinsTable tbody");
-  tbody.innerHTML = "";
-  topCoins.forEach(c => {
-    tbody.innerHTML += `<tr>
-      <td>${c.symbol}</td>
-      <td>${c.price}</td>
-      <td>${c.marketCap}</td>
-      <td>${c.change}</td>
-    </tr>`;
+function renderTop(json){
+  const tbody = document.querySelector('#tblTop tbody');
+  tbody.innerHTML = '';
+  (json.symbols || []).forEach(sym => {
+    const marketPrice = json.data[sym] && json.data[sym].binance ? json.data[sym].binance : null;
+    tbody.innerHTML += `<tr><td>${sym}</td><td>${marketPrice || '-'}</td><td>-</td><td>-</td></tr>`;
   });
+  // chart
+  const labels = (json.symbols||[]).slice(0,12);
+  const data = labels.map(s => (json.data[s] && json.data[s].binance) ? json.data[s].binance : 0 );
+  renderChart(labels,data);
 }
 
-function updatePrices() {
-  prices = {};
-  topCoins.forEach(c => {
-    prices[c.symbol] = {};
-    exchanges.forEach(ex => {
-      if(MODE==="DEMO") {
-        prices[c.symbol][ex] = +(c.price * (0.99 + Math.random()*0.02)).toFixed(2);
-      } else {
-        prices[c.symbol][ex] = c.price; // LIVE: يمكن تعديل لاستدعاء API لكل منصة
-      }
-    });
-  });
-  renderPrices();
-  findArb();
-  renderWallet();
+function renderChart(labels,data){
+  const ctx = document.getElementById('chartTop').getContext('2d');
+  if(window._chart) window._chart.destroy();
+  window._chart = new Chart(ctx,{ type:'bar', data:{ labels, datasets:[{ label: 'Price USD', data, backgroundColor:'rgba(0,123,255,0.6)' }] }, options:{ responsive:true } });
 }
 
-// ------------------------------
-// 6️⃣ عرض الأسعار حسب المنصات
-// ------------------------------
-function renderPrices() {
-  const tbody = document.querySelector("#pricesTable tbody");
-  tbody.innerHTML = "";
-  for(let coin in prices) {
+function renderPrices(json){
+  const tbody = document.querySelector('#tblPrices tbody');
+  tbody.innerHTML = '';
+  const symbols = json.symbols || [];
+  for(const s of symbols){
+    const row = json.data[s] || {};
     tbody.innerHTML += `<tr>
-      <td>${coin}</td>
-      <td>${prices[coin]["Binance"]}</td>
-      <td>${prices[coin]["OKX"]}</td>
-      <td>${prices[coin]["Bybit"]}</td>
-      <td>${prices[coin]["Bitget"]}</td>
-      <td>${prices[coin]["BingX"]}</td>
+      <td>${s}</td>
+      <td>${row.binance ?? '-'}</td>
+      <td>${row.okx ?? '-'}</td>
+      <td>${row.bybit ?? '-'}</td>
+      <td>${row.bitget ?? '-'}</td>
+      <td>${row.bingx ?? '-'}</td>
     </tr>`;
   }
 }
 
-// ------------------------------
-// 7️⃣ فرص الأرّبتراج
-// ------------------------------
-function findArb() {
-  const tbody = document.querySelector("#arbTable tbody");
-  tbody.innerHTML = "";
-  for(let coin in prices) {
-    let data = prices[coin];
-    let minEx = exchanges[0], maxEx = exchanges[0];
-    let minPrice = data[minEx], maxPrice = data[maxEx];
-    for(let ex of exchanges){
-      if(data[ex] < minPrice){ minPrice = data[ex]; minEx = ex;}
-      if(data[ex] > maxPrice){ maxPrice = data[ex]; maxEx = ex;}
-    }
-    let spread = (maxPrice - minPrice).toFixed(2);
-    let percent = ((spread/minPrice)*100).toFixed(2);
-    if(percent > 0.2){
+function findAndRenderArb(json){
+  const tbody = document.querySelector('#tblArb tbody');
+  tbody.innerHTML = '';
+  const symbols = json.symbols || [];
+  for(const s of symbols){
+    const row = json.data[s];
+    if(!row) continue;
+    const entries = exchanges.map(e => ({ e, p: row[e] })).filter(x=>x.p);
+    if(entries.length < 2) continue;
+    entries.sort((a,b)=>a.p-b.p);
+    const min = entries[0], max = entries[entries.length-1];
+    const spread = (max.p - min.p);
+    const pct = spread / min.p * 100;
+    if(pct > 0.2) {
       tbody.innerHTML += `<tr>
-        <td>${coin}</td>
-        <td>${minEx}</td>
-        <td>${maxEx}</td>
-        <td>${spread}</td>
-        <td>${percent}</td>
+        <td>${s}</td>
+        <td>${min.e}</td>
+        <td>${max.e}</td>
+        <td>${spread.toFixed(2)}</td>
+        <td>${pct.toFixed(2)}</td>
       </tr>`;
     }
   }
 }
 
-// ------------------------------
-// 8️⃣ المحفظة
-// ------------------------------
-function renderWallet() {
-  const tbody = document.querySelector("#walletTable tbody");
-  tbody.innerHTML = "";
-  for(let coin in wallet){
-    tbody.innerHTML += `<tr><td>${coin}</td><td>${wallet[coin].toFixed(4)}</td></tr>`;
+function renderWallet(){
+  const tbody = document.querySelector('#tblWallet tbody');
+  tbody.innerHTML = '';
+  for(const k in wallet) {
+    tbody.innerHTML += `<tr><td>${k}</td><td>${wallet[k].toFixed(6)}</td></tr>`;
   }
 }
 
-// ------------------------------
-// 9️⃣ تنفيذ صفقة تجريبية
-// ------------------------------
-function executeTrade(){
-  let amount = 100; // USDT
-  if(wallet.USDT >= amount){
+function executeDemoTrade(){
+  const amount = 100;
+  if(wallet.USDT >= amount && latest.data && latest.data['BTC'] && latest.data['BTC'].binance){
     wallet.USDT -= amount;
-    wallet.BTC += amount / prices["BTC"]["Binance"];
+    const price = latest.data['BTC'].binance;
+    wallet.BTC += amount / price;
     renderWallet();
-    alert(LANG==="AR"?"تم تنفيذ صفقة تجريبية: شراء BTC بمقدار 100 USDT":"Demo Trade executed: Bought BTC 100 USDT");
+    alert(LANG==='AR' ? 'تم تنفيذ صفقة تجريبية' : 'Demo trade executed');
   } else {
-    alert(LANG==="AR"?"رصيد USDT غير كافٍ!":"Not enough USDT!");
+    alert(LANG==='AR' ? 'الرصيد غير كافٍ أو بيانات غير متوفرة' : 'Insufficient funds or data');
   }
 }
 
-// ------------------------------
-// 10️⃣ رسم بياني Top Coins
-// ------------------------------
-function renderChart(){
-  const ctx = document.getElementById("topCoinsChart").getContext("2d");
-  if(topCoinsChart) topCoinsChart.destroy();
-  topCoinsChart = new Chart(ctx, {
-    type: 'bar',
-    data: {
-      labels: topCoins.map(c=>c.symbol),
-      datasets:[{
-        label: LANG==="AR"?"السعر (USD)":"Price (USD)",
-        data: topCoins.map(c=>c.price),
-        backgroundColor:'rgba(10,132,255,0.7)',
-        borderColor:'rgba(10,132,255,1)',
-        borderWidth:1
-      }]
-    },
-    options:{ responsive:true, plugins:{ legend:{ display:true } } }
-  });
-}
-
-// ------------------------------
-// 11️⃣ التحديث الدوري
-// ------------------------------
-fetchTop30().then(()=>{
-  setInterval(updatePrices, 2000); // تحديث كل ثانيتين
-  setInterval(renderChart, 5000);   // تحديث الرسم كل 5 ثواني
-});
+// auto-refresh every 2s
+fetchAndRender();
+setInterval(fetchAndRender, 2000);
 </script>
-
 </body>
 </html>
