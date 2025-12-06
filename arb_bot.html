@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Crypto Arbitrage Bot DEMO</title>
+<style>
+body { font-family: Arial, sans-serif; background: #1e1e1e; color: #fff; margin: 0; padding: 0; }
+header { background: #111; padding: 10px; text-align: center; font-size: 24px; font-weight: bold; }
+section { padding: 10px; }
+table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+th, td { padding: 8px; border: 1px solid #444; text-align: center; }
+th { background: #333; }
+button { padding: 8px 12px; margin: 5px; cursor: pointer; background: #0a84ff; color: #fff; border: none; border-radius: 5px; }
+button:hover { background: #0066cc; }
+</style>
+</head>
+<body>
+
+<header>🚀 Crypto Arbitrage Bot - DEMO</header>
+
+<section>
+<h2>📊 أعلى 30 عملة</h2>
+<table id="coinsTable">
+<thead>
+<tr><th>الرمز</th><th>السعر (USD)</th><th>القيمة السوقية</th><th>تغير 24h %</th></tr>
+</thead>
+<tbody></tbody>
+</table>
+</section>
+
+<section>
+<h2>🔍 أسعار المنصات</h2>
+<table id="pricesTable">
+<thead>
+<tr><th>العملة</th><th>Binance</th><th>OKX</th><th>Bybit</th><th>Bitget</th><th>BingX</th></tr>
+</thead>
+<tbody></tbody>
+</table>
+</section>
+
+<section>
+<h2>💡 فرص الأرّبتراج</h2>
+<table id="arbTable">
+<thead>
+<tr><th>العملة</th><th>اشترِ من</th><th>بيع في</th><th>Spread (USD)</th><th>نسبة %</th></tr>
+</thead>
+<tbody></tbody>
+</table>
+</section>
+
+<section>
+<h2>💳 المحفظة التجريبية</h2>
+<table id="walletTable">
+<thead>
+<tr><th>العملة</th><th>الرصيد</th></tr>
+</thead>
+<tbody></tbody>
+</table>
+<button onclick="executeTrade()">تنفيذ صفقة تجريبية</button>
+</section>
+
+<script>
+// ------------------------------
+// 1️⃣ إعداد المحفظة التجريبية
+// ------------------------------
+let wallet = { USDT: 10000, BTC: 0, ETH: 0 };
+let topCoins = [];
+let prices = {};
+let exchanges = ["Binance", "OKX", "Bybit", "Bitget", "BingX"];
+
+// ------------------------------
+// 2️⃣ جلب أعلى 30 عملة (CoinGecko)
+// ------------------------------
+async function fetchTop30() {
+    const res = await fetch("https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=30&page=1");
+    const data = await res.json();
+    topCoins = data.map(c => ({
+        symbol: c.symbol.toUpperCase(),
+        price: c.current_price,
+        marketCap: c.market_cap,
+        change: c.price_change_percentage_24h.toFixed(2)
+    }));
+    renderCoins();
+}
+function renderCoins() {
+    const tbody = document.querySelector("#coinsTable tbody");
+    tbody.innerHTML = "";
+    topCoins.forEach(c => {
+        tbody.innerHTML += `<tr>
+        <td>${c.symbol}</td>
+        <td>${c.price}</td>
+        <td>${c.marketCap}</td>
+        <td>${c.change}</td>
+        </tr>`;
+    });
+}
+
+// ------------------------------
+// 3️⃣ تحديث أسعار المنصات (DEMO)
+// ------------------------------
+function updatePrices() {
+    prices = {};
+    topCoins.forEach(c => {
+        prices[c.symbol] = {};
+        exchanges.forEach(ex => {
+            prices[c.symbol][ex] = +(c.price * (0.99 + Math.random()*0.02)).toFixed(2);
+        });
+    });
+    renderPrices();
+    findArb();
+}
+function renderPrices() {
+    const tbody = document.querySelector("#pricesTable tbody");
+    tbody.innerHTML = "";
+    for (let coin in prices) {
+        tbody.innerHTML += `<tr>
+        <td>${coin}</td>
+        <td>${prices[coin]["Binance"]}</td>
+        <td>${prices[coin]["OKX"]}</td>
+        <td>${prices[coin]["Bybit"]}</td>
+        <td>${prices[coin]["Bitget"]}</td>
+        <td>${prices[coin]["BingX"]}</td>
+        </tr>`;
+    }
+}
+
+// ------------------------------
+// 4️⃣ كشف فرص الأرّبتراج
+// ------------------------------
+function findArb() {
+    const tbody = document.querySelector("#arbTable tbody");
+    tbody.innerHTML = "";
+    for (let coin in prices) {
+        let data = prices[coin];
+        let minEx = exchanges[0], maxEx = exchanges[0];
+        let minPrice = data[minEx], maxPrice = data[maxEx];
+        for (let ex of exchanges) {
+            if (data[ex] < minPrice) { minPrice = data[ex]; minEx = ex; }
+            if (data[ex] > maxPrice) { maxPrice = data[ex]; maxEx = ex; }
+        }
+        let spread = (maxPrice - minPrice).toFixed(2);
+        let percent = ((spread / minPrice)*100).toFixed(2);
+        if (percent > 0.2) {
+            tbody.innerHTML += `<tr>
+            <td>${coin}</td>
+            <td>${minEx}</td>
+            <td>${maxEx}</td>
+            <td>${spread}</td>
+            <td>${percent}</td>
+            </tr>`;
+        }
+    }
+}
+
+// ------------------------------
+// 5️⃣ عرض المحفظة
+// ------------------------------
+function renderWallet() {
+    const tbody = document.querySelector("#walletTable tbody");
+    tbody.innerHTML = "";
+    for (let coin in wallet) {
+        tbody.innerHTML += `<tr><td>${coin}</td><td>${wallet[coin].toFixed(4)}</td></tr>`;
+    }
+}
+
+// ------------------------------
+// 6️⃣ تنفيذ صفقة تجريبية
+// ------------------------------
+function executeTrade() {
+    let amount = 100; // USDT
+    if(wallet.USDT >= amount) {
+        wallet.USDT -= amount;
+        wallet.BTC += amount / prices["BTC"]["Binance"];
+        renderWallet();
+        alert("تم تنفيذ صفقة تجريبية: شراء BTC بمقدار 100 USDT");
+    } else {
+        alert("رصيد USDT غير كافٍ!");
+    }
+}
+
+// ------------------------------
+// 7️⃣ تحديث دوري
+// ------------------------------
+fetchTop30().then(()=> {
+    renderWallet();
+    setInterval(updatePrices, 1000); // تحديث كل ثانية
+});
+</script>
+
+</body>
+</html>
